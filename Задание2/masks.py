@@ -3,8 +3,7 @@ import xml.etree.ElementTree as ET
 import numpy as np
 from PIL import ImageColor
 
-hex ='#66ff66'
-rgb = ImageColor.getrgb(hex)
+
 
 
 
@@ -13,7 +12,11 @@ rgb = ImageColor.getrgb(hex)
 def xml_parser():
     tree = ET.parse('masks.xml')
     root = tree.getroot()
-
+    for hex in root.iter('label'):
+        if hex.find('name').text != 'Skin':
+            continue
+        hex = hex.find('color').text
+        break
     for image in root.findall('image'):
         shapes = []
         name_index = image.get('name').rfind('/')
@@ -25,13 +28,14 @@ def xml_parser():
             points = [list(map(float, x.split(','))) for x in points]
             shapes.append(points)
 
-        image_mask(name, shapes)
+        image_mask(name, shapes, hex)
     return 'Выполнено'
 
 
 
 
-def image_mask(name, points):
+def image_mask(name, points, hex):
+    rgb = ImageColor.getrgb(hex)
     photo = cv.imread(f'images/{name}')
     img = np.zeros(photo.shape[:2], dtype='uint8')
     for point in points:
